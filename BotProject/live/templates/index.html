@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<body>
+<button id="startBtn">🎙 Start</button>
+<button id="stopBtn">⏹ Stop</button>
+<p id="result"></p>
+
+<script>
+let ws;
+let mediaRecorder;
+
+document.getElementById("startBtn").onclick = async () => {
+    ws = new WebSocket("ws://localhost:8000/ws/audio/");
+    
+    ws.onmessage = (event) => {
+        let data = JSON.parse(event.data);
+        if (data.text) {
+            document.getElementById("result").innerText = data.text;
+        }
+    };
+
+    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+            e.data.arrayBuffer().then(buf => {
+                ws.send(buf);
+            });
+        }
+    };
+
+    mediaRecorder.start(250);
+};
+
+document.getElementById("stopBtn").onclick = () => {
+    mediaRecorder.stop();
+    ws.send(JSON.stringify({ type: "stop" }));
+};
+</script>
+</body>
+</html>
