@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import *
-
+from . import views
 
 urlpatterns = [
-    path("", mic, name="mic"),
+    path('call/', views.make_call, name='make_call'),
 ]
